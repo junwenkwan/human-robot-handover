@@ -55,87 +55,91 @@ class HandoverDataset(Dataset):
 
         return sample
 
-transform = transforms.Compose([transforms.ToPILImage(),
-                                transforms.RandomHorizontalFlip(),
-                                transforms.RandomResizedCrop((720, 1280), scale=(0.7,1.0)),
-                                transforms.ToTensor()])
+def main():
+    transform = transforms.Compose([transforms.ToPILImage(),
+                                    transforms.RandomHorizontalFlip(),
+                                    transforms.RandomResizedCrop((720, 1280), scale=(0.7,1.0)),
+                                    transforms.ToTensor()])
 
-handover_train = HandoverDataset(csv_file='datasets/Handover/classes_train.csv',
-                                    img_dir='datasets/Handover/handover',
-                                    transform=transform,
-                                    split='train')
+    handover_train = HandoverDataset(csv_file='datasets/Handover/classes_train.csv',
+                                        img_dir='datasets/Handover/handover',
+                                        transform=transform,
+                                        split='train')
 
-# for i in range(len(handover_train)):
-#     sample = handover_train[i]
-#
-#     print(i, sample['image'].size(), sample['class'])
-#
-#     if i == 3:
-#         break
+    # for i in range(len(handover_train)):
+    #     sample = handover_train[i]
+    #
+    #     print(i, sample['image'].size(), sample['class'])
+    #
+    #     if i == 3:
+    #         break
 
-transform = transforms.Compose([transforms.ToTensor()])
+    transform = transforms.Compose([transforms.ToTensor()])
 
-handover_test = HandoverDataset(csv_file='datasets/Handover/classes_test.csv',
-                                    img_dir='datasets/Handover/handover',
-                                    transform=transform,
-                                    split='test')
+    handover_test = HandoverDataset(csv_file='datasets/Handover/classes_test.csv',
+                                        img_dir='datasets/Handover/handover',
+                                        transform=transform,
+                                        split='test')
 
-trainloader = DataLoader(handover_train, batch_size=2, shuffle=True, num_workers=2)
-testloader = DataLoader(handover_test, batch_size=1, shuffle=False, num_workers=2)
+    trainloader = DataLoader(handover_train, batch_size=2, shuffle=True, num_workers=2)
+    testloader = DataLoader(handover_test, batch_size=1, shuffle=False, num_workers=2)
 
-"""
-MODEL
-"""
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-# print(device)
+    """
+    MODEL
+    """
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # print(device)
 
-resnet50 = models.resnet50()
-resnet50 = resnet50.to(device)
-# print(resnet50)
+    resnet50 = models.resnet50()
+    resnet50 = resnet50.to(device)
+    # print(resnet50)
 
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(resnet50.parameters(), lr=0.0001)
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(resnet50.parameters(), lr=0.0001)
 
-"""
-TRAINING LOOP
-"""
-for epoch in range(EPOCHS):  # loop over the dataset multiple times
+    """
+    TRAINING LOOP
+    """
+    for epoch in range(EPOCHS):  # loop over the dataset multiple times
 
-    running_loss = 0.0
-    for i, data in enumerate(trainloader, 0):
-        # get the inputs; data is a dict of [inputs, class]
-        inputs, cls = data['image'].to(device), data['class'].to(device)
+        running_loss = 0.0
+        for i, data in enumerate(trainloader, 0):
+            # get the inputs; data is a dict of [inputs, class]
+            inputs, cls = data['image'].to(device), data['class'].to(device)
 
-        # zero the parameter gradients
-        optimizer.zero_grad()
+            # zero the parameter gradients
+            optimizer.zero_grad()
 
-        # forward + backward + optimize
-        outputs = resnet50(inputs)
-        loss = criterion(outputs, cls)
-        loss.backward()
-        optimizer.step()
+            # forward + backward + optimize
+            outputs = resnet50(inputs)
+            loss = criterion(outputs, cls)
+            loss.backward()
+            optimizer.step()
 
-        # print statistics
-        running_loss += loss.item()
-        if i % 10 == 9:    # print every 2000 mini-batches
-            print('[%d, %3d] loss: %.3f' %
-                  (epoch + 1, i + 1, running_loss / 10))
-            running_loss = 0.0
+            # print statistics
+            running_loss += loss.item()
+            if i % 10 == 9:    # print every 2000 mini-batches
+                print('[%d, %3d] loss: %.3f' %
+                      (epoch + 1, i + 1, running_loss / 10))
+                running_loss = 0.0
 
-print('Finished Training')
+    print('Finished Training')
 
-"""
-TESTING LOOP
-"""
-correct = 0
-total = 0
-with torch.no_grad():
-    for data in testloader:
-        images, cls = data['image'].to(device), data['class'].to(device)
-        outputs = resnet50(images)
-        _, predicted = torch.max(outputs.data, 1)
-        total += cls.size(0)
-        correct += (predicted == cls).sum().item()
+    """
+    TESTING LOOP
+    """
+    correct = 0
+    total = 0
+    with torch.no_grad():
+        for data in testloader:
+            images, cls = data['image'].to(device), data['class'].to(device)
+            outputs = resnet50(images)
+            _, predicted = torch.max(outputs.data, 1)
+            total += cls.size(0)
+            correct += (predicted == cls).sum().item()
 
-print('Accuracy of the network on the %d test images: %d %%' % (len(testloader),
-    100 * correct / total))
+    print('Accuracy of the network on the %d test images: %d %%' % (len(testloader),
+        100 * correct / total))
+
+if __name__ == "__main__":
+    main()
