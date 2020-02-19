@@ -9,7 +9,7 @@ The pretrained weights for the object detection network can be found in the [Goo
 
 ## Running inference on pretrained keypoint detection weights
 ```
-python demo/demo.py --config-file configs/COCO-Keypoints/keypoint_rcnn_R_101_FPN_3x.yaml \
+sudo python3 demo/demo.py --config-file configs/COCO-Keypoints/keypoint_rcnn_R_101_FPN_3x.yaml \
   --video-input VIDEO_INPUT \
   --confidence-threshold CONFIDENCE_TRHESHOLD
   --output OUTPUT
