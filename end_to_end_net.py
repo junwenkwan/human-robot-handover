@@ -42,7 +42,8 @@ class HandoverDataset(Dataset):
             idx = idx.tolist()
 
         img_name = os.path.join(self.img_dir, self.handover_dict[idx]["file_name"])
-        cls = self.handover_dict[idx]["class"]
+        cls = [self.handover_dict[idx]["class_true"], self.handover_dict[idx]["class_false"]]
+        cls = np.asarray(cls)
         image = io.imread(img_name)
         sample = {"image": image, "class":cls}
 
@@ -67,13 +68,13 @@ def do_train(model, device, trainloader, criterion, optimizer, epochs):
 
             # forward + backward + optimize
             outputs = model(inputs)
-            loss = criterion(outputs, cls)
+            loss = criterion(outputs.float(), cls.float())
             loss.backward()
             optimizer.step()
 
             # print statistics
             running_loss += loss.item()
-            if i % 10 == 9:    # print every 2000 mini-batches
+            if i % 10 == 9:    # print every 10 mini-batches
                 print('[%d, %3d] loss: %.3f' %
                       (epoch + 1, i + 1, running_loss / 10))
                 running_loss = 0.0
@@ -92,6 +93,7 @@ def do_test(model, device, testloader):
             outputs = model(images)
             _, predicted = torch.max(outputs.data, 1)
             total += cls.size(0)
+            _, cls = torch.max(cls, 1)
             correct += (predicted == cls).sum().item()
 
     print('Accuracy of the network on the %d test images: %d %%' % (len(testloader),
@@ -123,10 +125,11 @@ def main(args):
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     resnet50 = models.resnet50()
+    resnet50.fc = nn.Linear(2048,2)
     resnet50 = resnet50.to(device)
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.MSELoss()
     optimizer = optim.Adam(resnet50.parameters(), lr=0.0001)
-    epochs = 10
+    epochs = 5
 
     do_train(resnet50, device, trainloader, criterion, optimizer, epochs)
     do_test(resnet50, device, testloader)
@@ -159,6 +162,5 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    # print(args.train_csv)
 
     main(args)
