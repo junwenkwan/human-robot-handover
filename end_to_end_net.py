@@ -11,8 +11,7 @@ from torch.utils.data import Dataset, DataLoader
 import random
 import torch.nn as nn
 import torch.optim as optim
-
-EPOCHS = 10
+import argparse
 
 """
 DATALOADER
@@ -20,7 +19,7 @@ DATALOADER
 class HandoverDataset(Dataset):
     """Handover dataset"""
 
-    def __init__(self, csv_file, img_dir, transform=None, split='train'):
+    def __init__(self, csv_file, img_dir, transform=None):
         """
         Args:
             csv_file (string): Path to the csv file with annotations.
@@ -29,11 +28,8 @@ class HandoverDataset(Dataset):
                 on a sample.
             split (string): Split the dataset into training or testing set
         """
-
-        if split == 'train':
-            self.handover = pd.read_csv('datasets/Handover/classes_train.csv')
-        elif split == 'test':
-            self.handover = pd.read_csv('datasets/Handover/classes_test.csv')
+        self.csv_file = csv_file
+        self.handover = pd.read_csv(self.csv_file)
         self.handover_dict = self.handover.to_dict("records")
         self.img_dir = img_dir
         self.transform = transform
@@ -55,52 +51,11 @@ class HandoverDataset(Dataset):
 
         return sample
 
-def main():
-    transform = transforms.Compose([transforms.ToPILImage(),
-                                    transforms.RandomHorizontalFlip(),
-                                    transforms.RandomResizedCrop((720, 1280), scale=(0.7,1.0)),
-                                    transforms.ToTensor()])
-
-    handover_train = HandoverDataset(csv_file='datasets/Handover/classes_train.csv',
-                                        img_dir='datasets/Handover/handover',
-                                        transform=transform,
-                                        split='train')
-
-    # for i in range(len(handover_train)):
-    #     sample = handover_train[i]
-    #
-    #     print(i, sample['image'].size(), sample['class'])
-    #
-    #     if i == 3:
-    #         break
-
-    transform = transforms.Compose([transforms.ToTensor()])
-
-    handover_test = HandoverDataset(csv_file='datasets/Handover/classes_test.csv',
-                                        img_dir='datasets/Handover/handover',
-                                        transform=transform,
-                                        split='test')
-
-    trainloader = DataLoader(handover_train, batch_size=2, shuffle=True, num_workers=2)
-    testloader = DataLoader(handover_test, batch_size=1, shuffle=False, num_workers=2)
-
-    """
-    MODEL
-    """
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    # print(device)
-
-    resnet50 = models.resnet50()
-    resnet50 = resnet50.to(device)
-    # print(resnet50)
-
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(resnet50.parameters(), lr=0.0001)
-
-    """
-    TRAINING LOOP
-    """
-    for epoch in range(EPOCHS):  # loop over the dataset multiple times
+"""
+TRAINING LOOP
+"""
+def do_train(model, device, trainloader, criterion, optimizer, epochs):
+    for epoch in range(epochs):  # loop over the dataset multiple times
 
         running_loss = 0.0
         for i, data in enumerate(trainloader, 0):
@@ -111,7 +66,7 @@ def main():
             optimizer.zero_grad()
 
             # forward + backward + optimize
-            outputs = resnet50(inputs)
+            outputs = model(inputs)
             loss = criterion(outputs, cls)
             loss.backward()
             optimizer.step()
@@ -125,15 +80,16 @@ def main():
 
     print('Finished Training')
 
-    """
-    TESTING LOOP
-    """
+"""
+TESTING LOOP
+"""
+def do_test(model, device, testloader):
     correct = 0
     total = 0
     with torch.no_grad():
         for data in testloader:
             images, cls = data['image'].to(device), data['class'].to(device)
-            outputs = resnet50(images)
+            outputs = model(images)
             _, predicted = torch.max(outputs.data, 1)
             total += cls.size(0)
             correct += (predicted == cls).sum().item()
@@ -141,5 +97,68 @@ def main():
     print('Accuracy of the network on the %d test images: %d %%' % (len(testloader),
         100 * correct / total))
 
+"""
+MAIN
+"""
+def main(args):
+    transform = transforms.Compose([transforms.ToPILImage(),
+                                    transforms.RandomHorizontalFlip(),
+                                    transforms.RandomResizedCrop((720, 1280), scale=(0.7,1.0)),
+                                    transforms.ToTensor()])
+
+    handover_train = HandoverDataset(csv_file=args.train_csv[0],
+                                        img_dir=args.img_folder[0],
+                                        transform=transform,
+                                    )
+
+    transform = transforms.Compose([transforms.ToTensor()])
+
+    handover_test = HandoverDataset(csv_file=args.test_csv[0],
+                                        img_dir=args.img_folder[0],
+                                        transform=transform,
+                                    )
+
+    trainloader = DataLoader(handover_train, batch_size=2, shuffle=True, num_workers=2)
+    testloader = DataLoader(handover_test, batch_size=1, shuffle=False, num_workers=2)
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    resnet50 = models.resnet50()
+    resnet50 = resnet50.to(device)
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(resnet50.parameters(), lr=0.0001)
+    epochs = 10
+
+    do_train(resnet50, device, trainloader, criterion, optimizer, epochs)
+    do_test(resnet50, device, testloader)
+
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(
+        description="Code to train the end-to-end network"
+    )
+    parser.add_argument(
+        "--img_folder",
+        default="./",
+        nargs=1,
+        metavar="IMAGE_FOLDER",
+        help="Path to image folder",
+        type=str
+    )
+    parser.add_argument(
+        "--train_csv",
+        nargs=1,
+        metavar="TRAIN_CSV",
+        help="Path to train set csv",
+        type=str
+    )
+    parser.add_argument(
+        "--test_csv",
+        nargs=1,
+        metavar="TEST_CSV",
+        help="Path to test set csv",
+        type=str
+    )
+
+    args = parser.parse_args()
+    # print(args.train_csv)
+
+    main(args)
