@@ -61,6 +61,11 @@ def head_pose_estimation(cv2_frame, mtcnn, model, transformations, softmax, idx_
     detected = mtcnn.detect_faces(cv2_frame)
     img_h, img_w, _ = np.shape(cv2_frame)
     ad = 0.2
+    predictions_arr = []
+    bounding_box_arr = []
+    face_keypoints_arr = []
+    w_arr = []
+    
     for i, d in enumerate(detected):
         if d['confidence'] > 0.95:
             x1, y1, w, h = d['box']
@@ -88,4 +93,9 @@ def head_pose_estimation(cv2_frame, mtcnn, model, transformations, softmax, idx_
             predictions = [yaw_predicted, pitch_predicted, roll_predicted]
             face_keypoints = [xw1, yw1, xw2, yw2]
 
-    return predictions, bounding_box, face_keypoints, w
+            predictions_arr.append(predictions)
+            bounding_box_arr.append(bounding_box)
+            face_keypoints_arr.append(face_keypoints)
+            w_arr.append(w)
+
+    return predictions_arr, bounding_box_arr, face_keypoints_arr, w_arr
