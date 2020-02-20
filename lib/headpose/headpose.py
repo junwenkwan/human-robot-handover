@@ -1,11 +1,8 @@
 from torchvision import transforms
 import torchvision
 
-from mtcnn.mtcnn import MTCNN
-import hopenet
+from model.hopenet import Hopenet
 import torch
-import torch.nn as nn
-from torchvision import transforms
 import numpy as np
 from PIL import Image
 from torch.autograd import Variable
@@ -31,30 +28,20 @@ def img_transform(img, transformations):
     return img
 
 
-def module_init(args):
+def module_init(cfg):
     # ResNet50 structure
-    model = hopenet.Hopenet(torchvision.models.resnet.Bottleneck, [3, 4, 6, 3], 66)
+    model = Hopenet(torchvision.models.resnet.Bottleneck, [3, 4, 6, 3], 66)
 
     # Load snapshot
-    gpu = args.gpu_id
-    pretrained_path = args.pretrained
+    gpu = cfg.HEAD_POSE.GPU_ID
+    pretrained_path = cfg.HEAD_POSE.PRETRAINED
     saved_state_dict = torch.load(pretrained_path)
     model.load_state_dict(saved_state_dict)
 
     model.cuda(gpu)
     model.eval()
 
-    mtcnn = MTCNN()
-
-    transformations = transforms.Compose([transforms.Resize(224), \
-                                    transforms.CenterCrop(224), transforms.ToTensor(), \
-                                    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
-
-    softmax = nn.Softmax(dim=1).cuda(gpu)
-    idx_tensor = [idx for idx in range(66)]
-    idx_tensor = torch.FloatTensor(idx_tensor).cuda(gpu)
-
-    return model, mtcnn, transformations, softmax, idx_tensor
+    return model
 
 
 def head_pose_estimation(cv2_frame, mtcnn, model, transformations, softmax, idx_tensor):
@@ -65,7 +52,7 @@ def head_pose_estimation(cv2_frame, mtcnn, model, transformations, softmax, idx_
     bounding_box_arr = []
     face_keypoints_arr = []
     w_arr = []
-    
+
     for i, d in enumerate(detected):
         if d['confidence'] > 0.95:
             x1, y1, w, h = d['box']
