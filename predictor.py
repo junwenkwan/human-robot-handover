@@ -28,8 +28,9 @@ class VisualizationDemo(object):
                 Useful since the visualization logic can be slow.
         """
         self.metadata_object = MetadataCatalog.get(
-            cfg_object.DATASETS.TEST[0] if len(cfg_object.DATASETS.TEST) else "__unused"
+            "__unused"
         )
+
         self.metadata_keypoint = MetadataCatalog.get(
             cfg_keypoint.DATASETS.TEST[0] if len(cfg_keypoint.DATASETS.TEST) else "__unused"
         )
@@ -99,12 +100,13 @@ class VisualizationDemo(object):
             frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
             blank_image = np.zeros((frame.shape[0],frame.shape[1],3), np.uint8)
 
-            if "instances" in predictions_object and "instances" in predictions_keypoint:
+            if "instances" in predictions_object:
                 predictions_object = predictions_object["instances"].to(self.cpu_device)
-                predictions_keypoint = predictions_keypoint["instances"].to(self.cpu_device)
+                vis_frame = video_visualizer_object.draw_instance_predictions(blank_image, predictions_object)
 
-                vis_frame = video_visualizer.draw_instance_predictions(blank_image, predictions_object)
-                vis_frame = video_visualizer.draw_instance_predictions(vis_frame, predictions_keypoint)
+            if "instances" in predictions_keypoint:
+                predictions_keypoint = predictions_keypoint["instances"].to(self.cpu_device)
+                vis_frame = video_visualizer_keypoint.draw_instance_predictions(vis_frame.get_image(), predictions_keypoint)
 
             # head pose estimation
             predictions, bounding_box, face_keypoints, w = head_pose_estimation(frame, self.mtcnn, self.head_pose_module, self.transformations, self.softmax, self.idx_tensor)

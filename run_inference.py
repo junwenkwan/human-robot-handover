@@ -29,6 +29,8 @@ def setup_cfg(args):
     cfg_keypoint.merge_from_file(args.cfg_keypoint)
     # Set score_threshold for builtin models
     cfg_object.MODEL.ROI_HEADS.SCORE_THRESH_TEST = args.confidence_threshold
+    cfg_object.MODEL.ROI_HEADS.NUM_CLASSES = 1
+    
     cfg_keypoint.MODEL.ROI_HEADS.SCORE_THRESH_TEST = args.confidence_threshold
 
     cfg_object.MODEL.WEIGHTS = args.obj_weights
@@ -50,7 +52,7 @@ def get_parser():
     )
     parser.add_argument(
         "--cfg-object",
-        default="./detectron2/configs/COCO-Detection/faster_rcnn_R_101_FPN_3x.yaml",
+        default="/home/jun/Documents/detectron2/configs/COCO-Detection/faster_rcnn_R_101_FPN_3x.yaml",
         metavar="FILE",
         help="path to object detection config file",
     )
