@@ -20,27 +20,39 @@ WINDOW_NAME = "COCO detections"
 
 def setup_cfg(args):
     # load config from file and command-line arguments
-    cfg = get_cfg()
-    add_config(cfg)
+    cfg_object = get_cfg()
+    cfg_keypoint = get_cfg()
 
-    cfg.merge_from_file(args.config_file)
-    cfg.merge_from_list(args.opts)
+    add_config(cfg_keypoint)
+
+    cfg_object.merge_from_file(args.cfg_object)
+    cfg_keypoint.merge_from_file(args.cfg_keypoint)
     # Set score_threshold for builtin models
-    cfg.MODEL.RETINANET.SCORE_THRESH_TEST = args.confidence_threshold
-    cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = args.confidence_threshold
-    cfg.MODEL.PANOPTIC_FPN.COMBINE.INSTANCES_CONFIDENCE_THRESH = args.confidence_threshold
+    cfg_object.MODEL.ROI_HEADS.SCORE_THRESH_TEST = args.confidence_threshold
+    cfg_keypoint.MODEL.ROI_HEADS.SCORE_THRESH_TEST = args.confidence_threshold
 
-    cfg.freeze()
-    return cfg
+    cfg_object.MODEL.WEIGHTS = args.obj_weights
+    cfg_keypoint.MODEL.WEIGHTS = args.keypoint_weights
+
+    cfg_object.freeze()
+    cfg_keypoint.freeze()
+
+    return cfg_object, cfg_keypoint
 
 
 def get_parser():
     parser = argparse.ArgumentParser(description="Detectron2 demo for builtin models")
     parser.add_argument(
-        "--config-file",
-        default="configs/quick_schedules/mask_rcnn_R_50_FPN_inference_acc_test.yaml",
+        "--cfg-keypoint",
+        default="",
         metavar="FILE",
-        help="path to config file",
+        help="path to keypoint config file",
+    )
+    parser.add_argument(
+        "--cfg-object",
+        default="",
+        metavar="FILE",
+        help="path to object detection config file",
     )
     parser.add_argument("--webcam", action="store_true", help="Take inputs from webcam.")
     parser.add_argument("--video-input", help="Path to video file.")
@@ -59,11 +71,19 @@ def get_parser():
     )
 
     parser.add_argument(
-        "--opts",
-        help="Modify config options using the command-line 'KEY VALUE' pairs",
-        default=[],
-        nargs=argparse.REMAINDER,
+        "--obj-weights",
+        type=str,
+        default="./pretrained-weights/Apple_Faster_RCNN_R_101_FPN_3x.pth",
+        help="Path to the object detection weights",
     )
+
+    parser.add_argument(
+        "--keypoint-weights",
+        type=str,
+        default="detectron2://COCO-Keypoints/keypoint_rcnn_R_101_FPN_3x/138363331/model_final_997cc7.pkl",
+        help="Path to the keypoint detection weights",
+    )
+
     return parser
 
 
@@ -74,9 +94,9 @@ if __name__ == "__main__":
     logger = setup_logger()
     logger.info("Arguments: " + str(args))
 
-    cfg = setup_cfg(args)
+    cfg_object, cfg_keypoint = setup_cfg(args)
 
-    demo = VisualizationDemo(cfg)
+    demo = VisualizationDemo(cfg_object, cfg_keypoint)
 
     if args.input:
         if len(args.input) == 1:

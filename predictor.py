@@ -19,7 +19,7 @@ from lib.headpose.utils import draw_axis, plot_pose_cube
 from mtcnn.mtcnn import MTCNN
 
 class VisualizationDemo(object):
-    def __init__(self, cfg, instance_mode=ColorMode.IMAGE):
+    def __init__(self, cfg_object, cfg_keypoint, instance_mode=ColorMode.IMAGE):
         """
         Args:
             cfg (CfgNode):
@@ -27,14 +27,20 @@ class VisualizationDemo(object):
             parallel (bool): whether to run the model in different processes from visualization.
                 Useful since the visualization logic can be slow.
         """
-        self.metadata = MetadataCatalog.get(
-            cfg.DATASETS.TEST[0] if len(cfg.DATASETS.TEST) else "__unused"
+        self.metadata_object = MetadataCatalog.get(
+            cfg_object.DATASETS.TEST[0] if len(cfg_object.DATASETS.TEST) else "__unused"
         )
+        self.metadata_keypoint = MetadataCatalog.get(
+            cfg_keypoint.DATASETS.TEST[0] if len(cfg_keypoint.DATASETS.TEST) else "__unused"
+        )
+
         self.cpu_device = torch.device("cpu")
         self.instance_mode = instance_mode
 
-        self.predictor = DefaultPredictor(cfg)
-        self.head_pose_module = module_init(cfg)
+        self.predictor_object = DefaultPredictor(cfg_object)
+        self.predictor_keypoint = DefaultPredictor(cfg_keypoint)
+
+        self.head_pose_module = module_init(cfg_keypoint)
         self.mtcnn = MTCNN()
         self.transformations = transforms.Compose([transforms.Resize(224), \
                                         transforms.CenterCrop(224), transforms.ToTensor(), \
@@ -59,19 +65,11 @@ class VisualizationDemo(object):
         # Convert image from OpenCV BGR format to Matplotlib RGB format.
         image = image[:, :, ::-1]
         visualizer = Visualizer(image, self.metadata, instance_mode=self.instance_mode)
-        if "panoptic_seg" in predictions:
-            panoptic_seg, segments_info = predictions["panoptic_seg"]
-            vis_output = visualizer.draw_panoptic_seg_predictions(
-                panoptic_seg.to(self.cpu_device), segments_info
-            )
-        else:
-            if "sem_seg" in predictions:
-                vis_output = visualizer.draw_sem_seg(
-                    predictions["sem_seg"].argmax(dim=0).to(self.cpu_device)
-                )
-            if "instances" in predictions:
-                instances = predictions["instances"].to(self.cpu_device)
-                vis_output = visualizer.draw_instance_predictions(predictions=instances)
+
+
+        if "instances" in predictions:
+            instances = predictions["instances"].to(self.cpu_device)
+            vis_output = visualizer.draw_instance_predictions(predictions=instances)
 
         return predictions, vis_output
 
@@ -94,15 +92,19 @@ class VisualizationDemo(object):
         Yields:
             ndarray: BGR visualizations of each video frame.
         """
-        video_visualizer = VideoVisualizer(self.metadata, self.instance_mode)
+        video_visualizer_object = VideoVisualizer(self.metadata_object, self.instance_mode)
+        video_visualizer_keypoint = VideoVisualizer(self.metadata_keypoint, self.instance_mode)
 
-        def process_predictions(frame, predictions):
+        def process_predictions(frame, predictions_object, predictions_keypoint):
             frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
             blank_image = np.zeros((frame.shape[0],frame.shape[1],3), np.uint8)
 
-            if "instances" in predictions:
-                predictions = predictions["instances"].to(self.cpu_device)
-                vis_frame = video_visualizer.draw_instance_predictions(blank_image, predictions)
+            if "instances" in predictions_object and "instances" in predictions_keypoint:
+                predictions_object = predictions_object["instances"].to(self.cpu_device)
+                predictions_keypoint = predictions_keypoint["instances"].to(self.cpu_device)
+
+                vis_frame = video_visualizer.draw_instance_predictions(blank_image, predictions_object)
+                vis_frame = video_visualizer.draw_instance_predictions(vis_frame, predictions_keypoint)
 
             # head pose estimation
             predictions, bounding_box, face_keypoints, w = head_pose_estimation(frame, self.mtcnn, self.head_pose_module, self.transformations, self.softmax, self.idx_tensor)
@@ -126,4 +128,4 @@ class VisualizationDemo(object):
         frame_gen = self._frame_from_video(video)
 
         for frame in frame_gen:
-            yield process_predictions(frame, self.predictor(frame))
+            yield process_predictions(frame, self.predictor_object(frame), self.predictor_keypoint(frame))
