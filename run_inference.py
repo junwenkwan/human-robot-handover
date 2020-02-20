@@ -44,13 +44,13 @@ def get_parser():
     parser = argparse.ArgumentParser(description="Detectron2 demo for builtin models")
     parser.add_argument(
         "--cfg-keypoint",
-        default="",
+        default="./detectron2/configs/COCO-Keypoints/keypoint_rcnn_R_101_FPN_3x.yaml",
         metavar="FILE",
         help="path to keypoint config file",
     )
     parser.add_argument(
         "--cfg-object",
-        default="",
+        default="./detectron2/configs/COCO-Detection/faster_rcnn_R_101_FPN_3x.yaml",
         metavar="FILE",
         help="path to object detection config file",
     )
