@@ -13,10 +13,11 @@ pip3 install mtcnn
 The pretrained weights for the object detection network can be found in the [Google Drive](https://drive.google.com/file/d/1gx6beqSOwh0mTkATEDe3tdKdya-vPZSZ/view?usp=sharing) 
 
 ## Running inference on pretrained keypoint detection weights
-```
-sudo python3 run_inference.py --config-file configs/keypoint-RCNN-FPN.yaml \
-  --video-input [VIDEO_INPUT] \
-  --confidence-threshold [CONFIDENCE_TRHESHOLD]
-  --output OUTPUT
+```bash
+python3 run_inference.py \
+        --cfg-keypoint ./configs/keypoint.yaml \
+        --obj-weights ./pretrained-weights/Apple_Faster_RCNN_R_101_FPN_3x.pth \
+        --video-input [VIDEO_INPUT]
+        --output [OUTPUT]
 ```
 
