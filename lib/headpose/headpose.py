@@ -77,7 +77,7 @@ def head_pose_estimation(cv2_frame, mtcnn, model, transformations, softmax, idx_
             roll_predicted = torch.sum(roll_predicted.data[0] * idx_tensor) * 3 - 99
 
             bounding_box = d['box']
-            predictions = [yaw_predicted, pitch_predicted, roll_predicted]
+            predictions = [yaw_predicted.item(), pitch_predicted.item(), roll_predicted.item()]
             face_keypoints = [xw1, yw1, xw2, yw2]
 
             predictions_arr.append(predictions)
