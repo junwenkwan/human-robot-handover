@@ -30,7 +30,7 @@ def setup_cfg(args):
     # Set score_threshold for builtin models
     cfg_object.MODEL.ROI_HEADS.SCORE_THRESH_TEST = args.confidence_threshold
     cfg_object.MODEL.ROI_HEADS.NUM_CLASSES = 1
-    
+
     cfg_keypoint.MODEL.ROI_HEADS.SCORE_THRESH_TEST = args.confidence_threshold
 
     cfg_object.MODEL.WEIGHTS = args.obj_weights
@@ -46,13 +46,13 @@ def get_parser():
     parser = argparse.ArgumentParser(description="Detectron2 demo for builtin models")
     parser.add_argument(
         "--cfg-keypoint",
-        default="./detectron2/configs/COCO-Keypoints/keypoint_rcnn_R_101_FPN_3x.yaml",
+        default="./configs/keypoint_rcnn_R_101_FPN_3x.yaml",
         metavar="FILE",
         help="path to keypoint config file",
     )
     parser.add_argument(
         "--cfg-object",
-        default="/home/jun/Documents/detectron2/configs/COCO-Detection/faster_rcnn_R_101_FPN_3x.yaml",
+        default="./configs/object_faster_rcnn_R_101_FPN_3x.yaml",
         metavar="FILE",
         help="path to object detection config file",
     )
@@ -156,7 +156,7 @@ if __name__ == "__main__":
                 filename=output_fname,
                 # some installation of opencv may not support x264 (due to its license),
                 # you can try other format (e.g. MPEG)
-                fourcc=cv2.VideoWriter_fourcc(*"MJPG"),
+                fourcc=cv2.VideoWriter_fourcc(*"MP4V"),
                 fps=float(frames_per_second),
                 frameSize=(width, height),
                 isColor=True,
