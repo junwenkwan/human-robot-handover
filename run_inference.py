@@ -13,6 +13,8 @@ from detectron2.utils.logger import setup_logger
 
 from predictor import VisualizationDemo
 from add_config import *
+import json
+import copy
 
 # constants
 WINDOW_NAME = "COCO detections"
@@ -64,6 +66,12 @@ def get_parser():
         help="A file or directory to save output visualizations. "
         "If not given, will show output in an OpenCV window.",
     )
+    parser.add_argument(
+        "--out-json",
+        default="./default.json",
+        metavar="FILE",
+        help="A file or directory to save output json. "
+    )
 
     parser.add_argument(
         "--confidence-threshold",
@@ -97,8 +105,11 @@ if __name__ == "__main__":
     logger.info("Arguments: " + str(args))
 
     cfg_object, cfg_keypoint = setup_cfg(args)
-
+    database_json = {}
+    database_json['annotation'] = {}
+    database_arr = []
     demo = VisualizationDemo(cfg_object, cfg_keypoint)
+    frame = 0
 
     if args.input:
         if len(args.input) == 1:
@@ -162,7 +173,8 @@ if __name__ == "__main__":
                 isColor=True,
             )
         assert os.path.isfile(args.video_input)
-        for vis_frame in tqdm.tqdm(demo.run_on_video(video), total=num_frames):
+        for vis_frame, data_json in tqdm.tqdm(demo.run_on_video(video), total=num_frames):
+
             if args.output:
                 output_file.write(vis_frame)
             else:
@@ -170,6 +182,13 @@ if __name__ == "__main__":
                 cv2.imshow(basename, vis_frame)
                 if cv2.waitKey(1) == 27:
                     break  # esc to quit
+
+            database_arr.append(copy.deepcopy(data_json))
+        database_json["annotation"] = database_arr
+
+        with open(args.out_json, 'w') as json_file:
+            json.dump(database_json, json_file)
+
         video.release()
         if args.output:
             output_file.release()

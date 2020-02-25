@@ -17,6 +17,7 @@ from detectron2.utils.visualizer import ColorMode, Visualizer
 from lib.headpose import module_init, head_pose_estimation
 from lib.headpose.utils import draw_axis, plot_pose_cube
 from mtcnn.mtcnn import MTCNN
+import json
 
 class VisualizationDemo(object):
     def __init__(self, cfg_object, cfg_keypoint, instance_mode=ColorMode.IMAGE):
@@ -50,6 +51,11 @@ class VisualizationDemo(object):
 
         idx_tensor = [idx for idx in range(66)]
         self.idx_tensor = torch.FloatTensor(idx_tensor).cuda()
+        self.data_json = {}
+        self.data_json['object_detection'] = {}
+        self.data_json['keypoint_detection'] = {}
+        self.data_json['head_pose_estimation'] = {}
+        self.frame_count = 0
 
     def run_on_image(self, image):
         """
@@ -102,14 +108,21 @@ class VisualizationDemo(object):
 
             if "instances" in predictions_object:
                 predictions_object = predictions_object["instances"].to(self.cpu_device)
+                self.data_json['object_detection']['pred_boxes'] = predictions_object.get('pred_boxes').tensor.numpy().tolist()
+                self.data_json['object_detection']['scores'] = predictions_object.get('scores').numpy().tolist()
                 vis_frame = video_visualizer_object.draw_instance_predictions(blank_image, predictions_object)
 
             if "instances" in predictions_keypoint:
                 predictions_keypoint = predictions_keypoint["instances"].to(self.cpu_device)
+                self.data_json['keypoint_detection']['pred_boxes'] = predictions_keypoint.get('pred_boxes').tensor.numpy().tolist()
+                self.data_json['keypoint_detection']['scores'] = predictions_keypoint.get('scores').numpy().tolist()
+                self.data_json['keypoint_detection']['pred_keypoints'] = predictions_keypoint.get('pred_keypoints').numpy().tolist()
                 vis_frame = video_visualizer_keypoint.draw_instance_predictions(vis_frame.get_image(), predictions_keypoint)
 
             # head pose estimation
             predictions, bounding_box, face_keypoints, w = head_pose_estimation(frame, self.mtcnn, self.head_pose_module, self.transformations, self.softmax, self.idx_tensor)
+            self.data_json['head_pose_estimation']['predictions'] = predictions
+            self.data_json['head_pose_estimation']['pred_boxes'] = bounding_box
 
             # Converts Matplotlib RGB format to OpenCV BGR format
             vis_frame = cv2.cvtColor(vis_frame.get_image(), cv2.COLOR_RGB2BGR)
@@ -124,10 +137,13 @@ class VisualizationDemo(object):
                 #                 tdy= (face_keypoints[i][1] + face_keypoints[i][3]) / 2, \
                 #                 size = w[i])
 
-
-            return vis_frame
+            data_json = self.data_json
+            self.data_json['frame'] = self.frame_count
+            self.frame_count += 1
+            return vis_frame, data_json
 
         frame_gen = self._frame_from_video(video)
 
         for frame in frame_gen:
+
             yield process_predictions(frame, self.predictor_object(frame), self.predictor_keypoint(frame))
