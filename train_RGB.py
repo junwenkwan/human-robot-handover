@@ -44,7 +44,6 @@ class HandoverDataset(Dataset):
         img_name = os.path.join(self.img_dir, self.handover_dict[idx]["file_name"])
         cls = self.handover_dict[idx]["label"]
         cls = np.asarray(cls)
-        # cls = torch.Tensor(cls)
         image = io.imread(img_name)
         sample = {"image": image, "class":cls}
 
@@ -58,6 +57,7 @@ TRAINING LOOP
 """
 def do_train(model, device, trainloader, criterion, optimizer, epochs, weights_pth):
     model.train()
+    # print(weights_pth)
 
     for epoch in range(epochs):  # loop over the dataset multiple times
 
@@ -99,9 +99,12 @@ def do_test(model, device, testloader, weights_pth):
         for data in testloader:
             images, cls = data['image'].to(device), data['class'].to(device)
             outputs = model(images)
-            _, predicted = torch.max(outputs.data, 1)
+            predicted = (outputs >= 0.5).float()
+            print(predicted)
             total += cls.size(0)
             correct += (predicted == cls).sum().item()
+
+            print(outputs, cls)
 
     print('Accuracy of the network on the %d test images: %d %%' % (len(testloader),
         100 * correct / total))
