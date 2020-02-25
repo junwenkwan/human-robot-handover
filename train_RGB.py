@@ -12,7 +12,7 @@ import random
 import torch.nn as nn
 import torch.optim as optim
 import argparse
-
+os.environ['CUDA_LAUNCH_BLOCKING']='1'
 """
 DATALOADER
 """
@@ -42,8 +42,9 @@ class HandoverDataset(Dataset):
             idx = idx.tolist()
 
         img_name = os.path.join(self.img_dir, self.handover_dict[idx]["file_name"])
-        cls = [self.handover_dict[idx]["class_true"], self.handover_dict[idx]["class_false"]]
+        cls = self.handover_dict[idx]["label"]
         cls = np.asarray(cls)
+        # cls = torch.Tensor(cls)
         image = io.imread(img_name)
         sample = {"image": image, "class":cls}
 
@@ -57,7 +58,6 @@ TRAINING LOOP
 """
 def do_train(model, device, trainloader, criterion, optimizer, epochs, weights_pth):
     model.train()
-    # print(weights_pth)
 
     for epoch in range(epochs):  # loop over the dataset multiple times
 
@@ -71,7 +71,7 @@ def do_train(model, device, trainloader, criterion, optimizer, epochs, weights_p
 
             # forward + backward + optimize
             outputs = model(inputs)
-            loss = criterion(outputs.float(), cls.float())
+            loss = criterion(outputs, cls.view(-1,1).float())
             loss.backward()
             optimizer.step()
 
@@ -101,8 +101,6 @@ def do_test(model, device, testloader, weights_pth):
             outputs = model(images)
             _, predicted = torch.max(outputs.data, 1)
             total += cls.size(0)
-            _, cls = torch.max(cls, 1)
-            # print(outputs.data,predicted, cls)
             correct += (predicted == cls).sum().item()
 
     print('Accuracy of the network on the %d test images: %d %%' % (len(testloader),
@@ -136,11 +134,14 @@ def main(args):
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     resnet50 = models.resnet50()
-    resnet50.fc = nn.Linear(2048,2)
+    resnet50.fc = nn.Sequential(
+        nn.Linear(2048,1),
+        nn.Sigmoid()
+    )
     resnet50 = resnet50.to(device)
-    criterion = nn.MSELoss()
+    criterion = nn.BCELoss()
     optimizer = optim.Adam(resnet50.parameters(), lr=0.0001)
-    epochs = 30
+    epochs = 20
 
     if args.eval_only:
         do_test(resnet50, device, testloader, weights_pth)
