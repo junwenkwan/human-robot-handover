@@ -16,4 +16,12 @@ python3 run_inference.py \
         --output [OUTPUT]
 ```
 
+```bash
+python3 json_utils.py --json-path [JSON_FOLDER] --csv-path [classes.csv] \
+                      --output-json [sample_robot.json] 
+```
+
+```bash
+python3 train_MLP_localize.py --json-path [JSON_FILE] --weights-path [PATH_TO_WEIGHTS]
+```
 
