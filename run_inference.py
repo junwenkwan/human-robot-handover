@@ -12,7 +12,7 @@ from detectron2.data.detection_utils import read_image
 from detectron2.utils.logger import setup_logger
 
 from predictor import VisualizationDemo
-from add_config import *
+from utils.add_config import *
 import json
 import copy
 
