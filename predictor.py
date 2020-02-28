@@ -110,8 +110,8 @@ class VisualizationDemo(object):
             if "instances" in predictions_object:
                 predictions_object = predictions_object["instances"].to(self.cpu_device)
                 boxes_area = predictions_object.get('pred_boxes').area()
-                # print(boxes_area)
-                if boxes_area.nelement != 0:
+
+                if boxes_area.nelement() != 0:
                     max_val, max_idx = torch.max(boxes_area,dim=0)
 
                     pred_boxes_object = predictions_object.get('pred_boxes')[max_idx.item()]
@@ -137,7 +137,7 @@ class VisualizationDemo(object):
                 predictions_keypoint = predictions_keypoint["instances"].to(self.cpu_device)
                 boxes_area = predictions_keypoint.get('pred_boxes').area()
 
-                if boxes_area.nelement != 0:
+                if boxes_area.nelement() != 0:
                     max_val, max_idx = torch.max(boxes_area,dim=0)
 
                     pred_boxes_keypoint = predictions_keypoint.get('pred_boxes')[max_idx.item()]
@@ -154,7 +154,7 @@ class VisualizationDemo(object):
                     self.data_json['keypoint_detection']['pred_boxes'] = predictions_keypoint.get('pred_boxes')[max_idx.item()].tensor.numpy().tolist()
                     self.data_json['keypoint_detection']['scores'] = predictions_keypoint.get('scores')[max_idx.item()].numpy().tolist()
                     self.data_json['keypoint_detection']['pred_keypoints'] = predictions_keypoint.get('pred_keypoints')[max_idx.item()].numpy().tolist()
-                    vis_frame = video_visualizer_keypoint.draw_instance_predictions(vis_frame.get_image(), predictions_keypoint)
+                    vis_frame = video_visualizer_keypoint.draw_instance_predictions(vis_frame.get_image(), draw_instance_keypoint)
                 else:
                     self.data_json['keypoint_detection']['pred_boxes'] = []
                     self.data_json['keypoint_detection']['scores'] = []
@@ -164,6 +164,7 @@ class VisualizationDemo(object):
 
             # head pose estimation
             predictions, bounding_box, face_keypoints, w, face_area = head_pose_estimation(frame, self.mtcnn, self.head_pose_module, self.transformations, self.softmax, self.idx_tensor)
+            vis_frame = cv2.cvtColor(vis_frame.get_image(), cv2.COLOR_RGB2BGR)
 
             if len(face_area) != 0:
                 max_val, max_idx = torch.max(torch.Tensor(face_area),dim=0)
@@ -172,7 +173,6 @@ class VisualizationDemo(object):
                 self.data_json['head_pose_estimation']['pred_boxes'] = bounding_box[max_idx.item()]
 
                 # Converts Matplotlib RGB format to OpenCV BGR format
-                vis_frame = cv2.cvtColor(vis_frame.get_image(), cv2.COLOR_RGB2BGR)
 
                 plot_pose_cube(vis_frame, predictions[max_idx.item()][0], predictions[max_idx.item()][1], predictions[max_idx.item()][2], \
                                 tdx = (face_keypoints[max_idx.item()][0] + face_keypoints[max_idx.item()][2]) / 2, \
