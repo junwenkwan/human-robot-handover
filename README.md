@@ -6,6 +6,10 @@
 ## Pretrained models
 Download the pretrained models for [object detection](https://drive.google.com/file/d/1gx6beqSOwh0mTkATEDe3tdKdya-vPZSZ/view?usp=sharing) and [head pose estimation](https://drive.google.com/file/d/1kY2nfpnFsows14TLKTOd-8PYftOAeomh/view?usp=sharing).
 
+## Dataset
+The handover dataset used to obtain the pretrained weights can be found [here](https://drive.google.com/open?id=1NYRohLw1iWMH33qNJtft1tMSjXfnNyDk)
+
+
 ## Running inference
 ```bash
 python3 run_inference.py \
