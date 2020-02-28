@@ -17,9 +17,11 @@ from detectron2.utils.visualizer import ColorMode, Visualizer
 from lib.headpose import module_init, head_pose_estimation
 from lib.headpose.utils import draw_axis, plot_pose_cube
 from mtcnn.mtcnn import MTCNN
+from model.mlp import MLP
+from torch.autograd import Variable
 import json
 
-class VisualizationDemo(object):
+class VisualizationDemoMLP(object):
     def __init__(self, cfg_object, cfg_keypoint, instance_mode=ColorMode.IMAGE):
         """
         Args:
@@ -56,6 +58,11 @@ class VisualizationDemo(object):
         self.data_json['keypoint_detection'] = {}
         self.data_json['head_pose_estimation'] = {}
         self.frame_count = 0
+
+        self.mlp_model = MLP(input_size=26, output_size=1).cuda()
+        self.mlp_model.load_state_dict(torch.load(cfg_keypoint.MLP.PRETRAINED))
+        self.mlp_model.eval()
+
 
     def run_on_image(self, image):
         """
@@ -102,6 +109,37 @@ class VisualizationDemo(object):
         video_visualizer_object = VideoVisualizer(self.metadata_object, self.instance_mode)
         video_visualizer_keypoint = VideoVisualizer(self.metadata_keypoint, self.instance_mode)
 
+        def get_parameters(annos):
+            if annos["object_detection"]["pred_boxes"]:
+                temp = annos["object_detection"]["pred_boxes"][0]
+                obj_det = [1]
+                temp = np.asarray(temp)
+                temp = temp.flatten()
+
+                key_det = annos["keypoint_detection"]["pred_keypoints"][0]
+                key_det = np.asarray(key_det)
+                key_det = key_det[0:11, 0:2]
+                key_det = np.subtract(key_det, temp[0:2])
+                key_det = key_det.flatten()
+
+            else:
+                obj_det = [-1]
+                obj_det = np.asarray(obj_det)
+
+                key_det = annos["keypoint_detection"]["pred_keypoints"][0]
+                key_det = np.asarray(key_det)
+                key_det = key_det[0:11, 0:2]
+                key_det = key_det.flatten()
+
+            if annos["head_pose_estimation"]["predictions"]:
+                hp_est = annos["head_pose_estimation"]["predictions"][0]
+                hp_est = np.asarray(hp_est)
+            else:
+                hp_est = np.asarray([-100, -100, -100])
+
+            anno_list = np.concatenate((obj_det, key_det, hp_est))
+            return anno_list
+
         def process_predictions(frame, predictions_object, predictions_keypoint):
             frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
             blank_image = np.zeros((frame.shape[0],frame.shape[1],3), np.uint8)
@@ -110,7 +148,7 @@ class VisualizationDemo(object):
                 predictions_object = predictions_object["instances"].to(self.cpu_device)
                 self.data_json['object_detection']['pred_boxes'] = predictions_object.get('pred_boxes').tensor.numpy().tolist()
                 self.data_json['object_detection']['scores'] = predictions_object.get('scores').numpy().tolist()
-                vis_frame = video_visualizer_object.draw_instance_predictions(blank_image, predictions_object)
+                vis_frame = video_visualizer_object.draw_instance_predictions(frame, predictions_object)
 
             if "instances" in predictions_keypoint:
                 predictions_keypoint = predictions_keypoint["instances"].to(self.cpu_device)
@@ -140,6 +178,15 @@ class VisualizationDemo(object):
             data_json = self.data_json
             self.data_json['frame'] = self.frame_count
             self.frame_count += 1
+
+            inputs_MLP = get_parameters(self.data_json)
+            inputs_MLP = Variable(torch.from_numpy(inputs_MLP)).float().cuda()
+            outputs_MLP = self.mlp_model(inputs_MLP)
+            predicted_MLP = (outputs_MLP >= 0.5)
+
+            cv2.putText(vis_frame,str(predicted_MLP.item()), (10,700), \
+                cv2.FONT_HERSHEY_SIMPLEX, 3, (0,0,0), 10)
+
             return vis_frame, data_json
 
         frame_gen = self._frame_from_video(video)

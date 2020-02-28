@@ -12,6 +12,7 @@ from detectron2.data.detection_utils import read_image
 from detectron2.utils.logger import setup_logger
 
 from predictor import VisualizationDemo
+from predictor_MLP import VisualizationDemoMLP
 from utils.add_config import *
 import json
 import copy
@@ -94,6 +95,8 @@ def get_parser():
         help="Path to the keypoint detection weights",
     )
 
+    parser.add_argument("--mlp", action="store_true", help="Run MLP.")
+
     return parser
 
 
@@ -108,7 +111,11 @@ if __name__ == "__main__":
     database_json = {}
     database_json['annotation'] = {}
     database_arr = []
-    demo = VisualizationDemo(cfg_object, cfg_keypoint)
+
+    if args.mlp:
+        demo = VisualizationDemoMLP(cfg_object, cfg_keypoint)
+    else:
+        demo = VisualizationDemo(cfg_object, cfg_keypoint)
     frame = 0
 
     if args.input:
