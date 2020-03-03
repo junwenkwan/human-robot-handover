@@ -1,4 +1,8 @@
 # Human-Robot Handover
+<div align="center">
+<img src="./teaser/demo.gif" width="700"/><br>
+</div>
+
 ## Requirements
 * [detectron2](https://github.com/facebookresearch/detectron2) (Follow [INSTALL.md](https://github.com/facebookresearch/detectron2/blob/master/INSTALL.md) to install detectron2)
 * [mtcnn](https://github.com/ipazc/mtcnn)
