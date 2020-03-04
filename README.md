@@ -25,11 +25,13 @@ python3 run_inference.py \
         --mlp
 ```
 
+## Generate a JSON file for MLP training
 ```bash
-python3 json_utils.py --json-path [JSON_FOLDER] --csv-path [classes.csv] \
-                      --output-json [sample_robot.json] 
+python3 utils/json_utils.py --json-path [JSON_FOLDER] --csv-path [classes.csv] \
+                      --output-json sample_robot.json
 ```
 
+## Train MLP network
 ```bash
 python3 train_MLP_localize.py --json-path [JSON_FILE] --weights-path [PATH_TO_WEIGHTS]
 ```
