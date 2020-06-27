@@ -1,4 +1,6 @@
-# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+# This code is modified from detectron2 by facebook research
+# Link to github repo: https://github.com/facebookresearch/detectron2
+
 import atexit
 import bisect
 import multiprocessing as mp
@@ -23,11 +25,7 @@ import json
 class VisualizationDemo(object):
     def __init__(self, cfg_object, cfg_keypoint, instance_mode=ColorMode.IMAGE):
         """
-        Args:
-            cfg (CfgNode):
-            instance_mode (ColorMode):
-            parallel (bool): whether to run the model in different processes from visualization.
-                Useful since the visualization logic can be slow.
+        Initialize all required modules
         """
         self.metadata_object = MetadataCatalog.get(
             "__unused"
@@ -58,29 +56,6 @@ class VisualizationDemo(object):
         self.data_json['head_pose_estimation'] = {}
         self.frame_count = 0
 
-    def run_on_image(self, image):
-        """
-        Args:
-            image (np.ndarray): an image of shape (H, W, C) (in BGR order).
-                This is the format used by OpenCV.
-
-        Returns:
-            predictions (dict): the output of the model.
-            vis_output (VisImage): the visualized image output.
-        """
-        vis_output = None
-        predictions = self.predictor(image)
-        # Convert image from OpenCV BGR format to Matplotlib RGB format.
-        image = image[:, :, ::-1]
-        visualizer = Visualizer(image, self.metadata, instance_mode=self.instance_mode)
-
-
-        if "instances" in predictions:
-            instances = predictions["instances"].to(self.cpu_device)
-            vis_output = visualizer.draw_instance_predictions(predictions=instances)
-
-        return predictions, vis_output
-
     def _frame_from_video(self, video):
         while video.isOpened():
             success, frame = video.read()
@@ -91,14 +66,7 @@ class VisualizationDemo(object):
 
     def run_on_video(self, video):
         """
-        Visualizes predictions on frames of the input video.
-
-        Args:
-            video (cv2.VideoCapture): a :class:`VideoCapture` object, whose source can be
-                either a webcam or a video file.
-
-        Yields:
-            ndarray: BGR visualizations of each video frame.
+        Process the input video
         """
         video_visualizer_object = VideoVisualizer(self.metadata_object, self.instance_mode)
         video_visualizer_keypoint = VideoVisualizer(self.metadata_keypoint, self.instance_mode)
@@ -107,6 +75,7 @@ class VisualizationDemo(object):
             frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
             blank_image = np.zeros((frame.shape[0],frame.shape[1],3), np.uint8)
 
+            # object detection
             if "instances" in predictions_object:
                 predictions_object = predictions_object["instances"].to(self.cpu_device)
                 boxes_area = predictions_object.get('pred_boxes').area()
@@ -117,13 +86,14 @@ class VisualizationDemo(object):
                     pred_boxes_object = predictions_object.get('pred_boxes')[max_idx.item()]
                     scores_object = predictions_object.get('scores')[max_idx.item()]
                     pred_classes_object = predictions_object.get('pred_classes')[max_idx.item()]
-
+                    
+                    # create a detectron2 instance for visualisation
                     draw_instance_object = Instances([1280,720])
-
                     draw_instance_object.set('pred_boxes',pred_boxes_object)
                     draw_instance_object.set('scores', torch.unsqueeze(scores_object, dim=0))
                     draw_instance_object.set('pred_classes', torch.unsqueeze(pred_classes_object, dim=0))
 
+                    # update json file
                     self.data_json['object_detection']['pred_boxes'] = predictions_object.get('pred_boxes')[max_idx.item()].tensor.numpy().tolist()
                     self.data_json['object_detection']['scores'] = predictions_object.get('scores')[max_idx.item()].numpy().tolist()
                     vis_frame = video_visualizer_object.draw_instance_predictions(blank_image, draw_instance_object)
@@ -132,7 +102,7 @@ class VisualizationDemo(object):
                     self.data_json['object_detection']['scores'] = []
                     vis_frame = video_visualizer_object.draw_instance_predictions(blank_image, predictions_object)
 
-
+            # keypoint detection
             if "instances" in predictions_keypoint:
                 predictions_keypoint = predictions_keypoint["instances"].to(self.cpu_device)
                 boxes_area = predictions_keypoint.get('pred_boxes').area()
@@ -145,12 +115,14 @@ class VisualizationDemo(object):
                     pred_classes_keypoint = predictions_keypoint.get('pred_classes')[max_idx.item()]
                     pred_keypoints_keypoint = predictions_keypoint.get('pred_keypoints')[max_idx.item()]
 
+                    # create a detectron2 instance for visualisation
                     draw_instance_keypoint = Instances([1280,720])
                     draw_instance_keypoint.set('pred_boxes', pred_boxes_keypoint)
                     draw_instance_keypoint.set('scores', torch.unsqueeze(scores_keypoint, dim=0))
                     draw_instance_keypoint.set('pred_classes', torch.unsqueeze(pred_classes_keypoint, dim=0))
                     draw_instance_keypoint.set('pred_keypoints', torch.unsqueeze(pred_keypoints_keypoint, dim=0))
 
+                    # update json file
                     self.data_json['keypoint_detection']['pred_boxes'] = predictions_keypoint.get('pred_boxes')[max_idx.item()].tensor.numpy().tolist()
                     self.data_json['keypoint_detection']['scores'] = predictions_keypoint.get('scores')[max_idx.item()].numpy().tolist()
                     self.data_json['keypoint_detection']['pred_keypoints'] = predictions_keypoint.get('pred_keypoints')[max_idx.item()].numpy().tolist()
@@ -160,7 +132,6 @@ class VisualizationDemo(object):
                     self.data_json['keypoint_detection']['scores'] = []
                     self.data_json['keypoint_detection']['pred_keypoints'] = []
                     vis_frame = video_visualizer_keypoint.draw_instance_predictions(vis_frame.get_image(), predictions_keypoint)
-
 
             # head pose estimation
             predictions, bounding_box, face_keypoints, w, face_area = head_pose_estimation(frame, self.mtcnn, self.head_pose_module, self.transformations, self.softmax, self.idx_tensor)
@@ -172,16 +143,10 @@ class VisualizationDemo(object):
                 self.data_json['head_pose_estimation']['predictions'] = predictions[max_idx.item()]
                 self.data_json['head_pose_estimation']['pred_boxes'] = bounding_box[max_idx.item()]
 
-                # Converts Matplotlib RGB format to OpenCV BGR format
-
                 plot_pose_cube(vis_frame, predictions[max_idx.item()][0], predictions[max_idx.item()][1], predictions[max_idx.item()][2], \
                                 tdx = (face_keypoints[max_idx.item()][0] + face_keypoints[max_idx.item()][2]) / 2, \
                                 tdy= (face_keypoints[max_idx.item()][1] + face_keypoints[max_idx.item()][3]) / 2, \
                                 size = w[max_idx.item()])
-                # draw_axis(vis_frame, predictions[i][0], predictions[i][1], predictions[i][2], \
-                #                 tdx = (face_keypoints[i][0] + face_keypoints[i][2]) / 2, \
-                #                 tdy= (face_keypoints[i][1] + face_keypoints[i][3]) / 2, \
-                #                 size = w[i])
 
             data_json = self.data_json
             self.data_json['frame'] = self.frame_count

@@ -1,9 +1,9 @@
 from detectron2.config import CfgNode as CN
 
 
-def add_config(cfg):
+def add_custom_config(cfg):
     """
-    Add config for densepose head.
+    Add config for head pose estimation
     """
     _C = cfg
 

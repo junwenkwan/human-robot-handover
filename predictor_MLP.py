@@ -1,4 +1,6 @@
-# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+# This code is modified from detectron2 by facebook research
+# Link to github repo: https://github.com/facebookresearch/detectron2
+
 import atexit
 import bisect
 import multiprocessing as mp
@@ -24,11 +26,7 @@ import json
 class VisualizationDemoMLP(object):
     def __init__(self, cfg_object, cfg_keypoint, instance_mode=ColorMode.IMAGE):
         """
-        Args:
-            cfg (CfgNode):
-            instance_mode (ColorMode):
-            parallel (bool): whether to run the model in different processes from visualization.
-                Useful since the visualization logic can be slow.
+        Initialize all required modules
         """
         self.metadata_object = MetadataCatalog.get(
             "__unused"
@@ -63,30 +61,6 @@ class VisualizationDemoMLP(object):
         self.mlp_model.load_state_dict(torch.load(cfg_keypoint.MLP.PRETRAINED))
         self.mlp_model.eval()
 
-
-    def run_on_image(self, image):
-        """
-        Args:
-            image (np.ndarray): an image of shape (H, W, C) (in BGR order).
-                This is the format used by OpenCV.
-
-        Returns:
-            predictions (dict): the output of the model.
-            vis_output (VisImage): the visualized image output.
-        """
-        vis_output = None
-        predictions = self.predictor(image)
-        # Convert image from OpenCV BGR format to Matplotlib RGB format.
-        image = image[:, :, ::-1]
-        visualizer = Visualizer(image, self.metadata, instance_mode=self.instance_mode)
-
-
-        if "instances" in predictions:
-            instances = predictions["instances"].to(self.cpu_device)
-            vis_output = visualizer.draw_instance_predictions(predictions=instances)
-
-        return predictions, vis_output
-
     def _frame_from_video(self, video):
         while video.isOpened():
             success, frame = video.read()
@@ -97,14 +71,7 @@ class VisualizationDemoMLP(object):
 
     def run_on_video(self, video):
         """
-        Visualizes predictions on frames of the input video.
-
-        Args:
-            video (cv2.VideoCapture): a :class:`VideoCapture` object, whose source can be
-                either a webcam or a video file.
-
-        Yields:
-            ndarray: BGR visualizations of each video frame.
+        Process the input video
         """
         video_visualizer_object = VideoVisualizer(self.metadata_object, self.instance_mode)
         video_visualizer_keypoint = VideoVisualizer(self.metadata_keypoint, self.instance_mode)
@@ -118,7 +85,9 @@ class VisualizationDemoMLP(object):
 
                 key_det = annos["keypoint_detection"]["pred_keypoints"][0]
                 key_det = np.asarray(key_det)
+                # select relevant keypoints
                 key_det = key_det[0:11, 0:2]
+                # localization
                 key_det = np.subtract(key_det, temp[0:2])
                 key_det = key_det.flatten()
 
@@ -143,13 +112,15 @@ class VisualizationDemoMLP(object):
         def process_predictions(frame, predictions_object, predictions_keypoint):
             frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
             blank_image = np.zeros((frame.shape[0],frame.shape[1],3), np.uint8)
-
+            
+            # object detection
             if "instances" in predictions_object:
                 predictions_object = predictions_object["instances"].to(self.cpu_device)
                 self.data_json['object_detection']['pred_boxes'] = predictions_object.get('pred_boxes').tensor.numpy().tolist()
                 self.data_json['object_detection']['scores'] = predictions_object.get('scores').numpy().tolist()
                 vis_frame = video_visualizer_object.draw_instance_predictions(frame, predictions_object)
 
+            # keypoint detection
             if "instances" in predictions_keypoint:
                 predictions_keypoint = predictions_keypoint["instances"].to(self.cpu_device)
                 self.data_json['keypoint_detection']['pred_boxes'] = predictions_keypoint.get('pred_boxes').tensor.numpy().tolist()
@@ -170,10 +141,6 @@ class VisualizationDemoMLP(object):
                                 tdx = (face_keypoints[i][0] + face_keypoints[i][2]) / 2, \
                                 tdy= (face_keypoints[i][1] + face_keypoints[i][3]) / 2, \
                                 size = w[i])
-                # draw_axis(vis_frame, predictions[i][0], predictions[i][1], predictions[i][2], \
-                #                 tdx = (face_keypoints[i][0] + face_keypoints[i][2]) / 2, \
-                #                 tdy= (face_keypoints[i][1] + face_keypoints[i][3]) / 2, \
-                #                 size = w[i])
 
             data_json = self.data_json
             self.data_json['frame'] = self.frame_count
