@@ -16,7 +16,7 @@ The handover dataset used to obtain the pretrained weights can be found [here](h
 
 ## Run system for training
 ```bash
-python3 run_inference.py \
+python3 main.py \
         --cfg-keypoint ./configs/keypoint_rcnn_R_101_FPN_3x.yaml \
         --cfg-object ./configs/object_faster_rcnn_R_101_FPN_3x.yaml \
         --obj-weights ./pretrained-weights/Apple_Faster_RCNN_R_101_FPN_3x.pth \
@@ -38,7 +38,7 @@ python3 train_MLP_localize.py --json-path [JSON_FILE] --weights-path [PATH_TO_WE
 
 ## Deployment
 ```bash
-python3 run_inference.py \
+python3 main.py \
         --cfg-keypoint ./configs/keypoint_rcnn_R_101_FPN_3x.yaml \
         --cfg-object ./configs/object_faster_rcnn_R_101_FPN_3x.yaml \
         --obj-weights ./pretrained-weights/Apple_Faster_RCNN_R_101_FPN_3x.pth \
