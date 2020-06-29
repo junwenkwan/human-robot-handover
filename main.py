@@ -13,8 +13,8 @@ from detectron2.config import get_cfg
 from detectron2.data.detection_utils import read_image
 from detectron2.utils.logger import setup_logger
 
-from predictor import VisualizationDemo
-from predictor_MLP import VisualizationDemoMLP
+from lib.predict.predictor import VisualizationDemo
+from lib.predict.predictor_MLP import VisualizationDemoMLP
 from utils.add_custom_config import *
 import json
 import copy
