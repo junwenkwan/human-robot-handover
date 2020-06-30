@@ -8,9 +8,10 @@ class MLP(nn.Module):
         self.output_size = output_size
         self.fc1 = nn.Linear(self.input_size, 1024)
         self.fc2 = nn.Linear(1024, 2048)
-        self.fc3 = nn.Linear(2048, 1024)
-        self.fc4 = nn.Linear(1024, 512)
-        self.fc5 = nn.Linear(512, self.output_size)
+        self.fc3 = nn.Linear(2048,4096)
+        self.fc4 = nn.Linear(4096, 2048)
+        self.fc5 = nn.Linear(2048, 1024)
+        self.fc6 = nn.Linear(1024, self.output_size)
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
@@ -18,6 +19,7 @@ class MLP(nn.Module):
         x = F.relu(self.fc2(x))
         x = F.relu(self.fc3(x))
         x = F.relu(self.fc4(x))
-        x = self.fc5(x)
+        x = F.relu(self.fc5(x))
+        x = self.fc6(x)
         output = self.sigmoid(x)
         return output
