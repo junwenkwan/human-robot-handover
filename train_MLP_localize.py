@@ -12,6 +12,7 @@ from torch.utils.data import Dataset, DataLoader, random_split
 import torch.optim as optim
 from torch.autograd import Variable
 import json
+from model.mlp import MLP
 os.environ['CUDA_LAUNCH_BLOCKING']='1'
 
 class HandoverDataset(Dataset):
@@ -32,7 +33,7 @@ class HandoverDataset(Dataset):
             idx = idx.tolist()
 
         if self.annos[idx]["object_detection"]["pred_boxes"]:
-            temp = self.annos[idx]["object_detection"]["pred_boxes"][0]
+            temp = self.annos[idx]["object_detection"]["pred_boxes"]
             obj_det = [1]
             temp = np.asarray(temp)
             temp = temp.flatten()
@@ -44,7 +45,7 @@ class HandoverDataset(Dataset):
             key_det = key_det.flatten()
 
         else:
-            obj_det = [-1]
+            obj_det = [-999]
             obj_det = np.asarray(obj_det)
 
             key_det = self.annos[idx]["keypoint_detection"]["pred_keypoints"]
@@ -58,7 +59,7 @@ class HandoverDataset(Dataset):
             hp_est = hp_est.flatten()
             hp_est = hp_est[0:3]
         else:
-            hp_est = np.asarray([-100, -100, -100])
+            hp_est = np.asarray([-999, -999, -999])
 
         label = self.annos[idx]["label"]
 
@@ -66,27 +67,6 @@ class HandoverDataset(Dataset):
         sample = {"annotations": anno_list, "class": label}
 
         return sample
-
-class MLP(nn.Module):
-    def __init__(self, input_size, output_size):
-        super(MLP, self).__init__()
-        self.input_size = input_size
-        self.output_size = output_size
-        self.fc1 = nn.Linear(self.input_size, 1024)
-        self.fc2 = nn.Linear(1024, 2048)
-        self.fc3 = nn.Linear(2048, 1024)
-        self.fc4 = nn.Linear(1024, 512)
-        self.fc5 = nn.Linear(512, self.output_size)
-        self.sigmoid = nn.Sigmoid()
-
-    def forward(self, x):
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = F.relu(self.fc3(x))
-        x = F.relu(self.fc4(x))
-        x = self.fc5(x)
-        output = self.sigmoid(x)
-        return output
 
 """
 TRAINING LOOP
@@ -115,7 +95,7 @@ def do_train(model, device, trainloader, criterion, optimizer, epochs, weights_p
             # print statistics
             running_loss += loss.item()
             if i % 10 == 9:    # print every 10 mini-batches
-                print('[%d, %3d] loss: %.3f' %
+                print('[%d, %3d] loss: %.5f' %
                       (epoch + 1, i + 1, running_loss / 10))
                 running_loss = 0.0
 
@@ -152,7 +132,7 @@ def main(args):
     handover_dataset = HandoverDataset(args.json_path[0])
     handover_train, handover_test = random_split(handover_dataset, (round(0.8*len(handover_dataset)), round(0.2*len(handover_dataset))))
 
-    trainloader = DataLoader(handover_train, batch_size=16, shuffle=True, num_workers=2)
+    trainloader = DataLoader(handover_train, batch_size=64, shuffle=True, num_workers=2)
     testloader = DataLoader(handover_test, batch_size=1, shuffle=False, num_workers=2)
 
     weights_pth = args.weights_path[0]
@@ -163,7 +143,7 @@ def main(args):
 
     criterion = nn.BCELoss()
     optimizer = optim.Adam(model.parameters(), lr=0.000001)
-    epochs = 200
+    epochs = 500
 
     if args.eval_only:
         do_test(model, device, testloader, weights_pth)
