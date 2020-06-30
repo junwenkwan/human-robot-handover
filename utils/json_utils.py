@@ -9,7 +9,6 @@ def process_dicts(json_dir):
     files = natsort.natsorted(files)
     print(files)
     dict_arr = []
-    list = ['0_','1_','2_','3_','5_']
 
     for file in files:
         json_file = os.path.join(json_dir, file)
@@ -19,18 +18,11 @@ def process_dicts(json_dir):
             json_file = json.load(f)
             annos = json_file['annotation']
 
-            if os.path.splitext(file)[0][6:8] in list:
-                # get every 20th frame
-                for index, element in enumerate(annos):
-                    if index%20 == 0:
-                        element['video_name'] = file
-                        dict_arr.append(element)
-            else:
-                # get every 10th frame
-                for index, element in enumerate(annos):
-                    if index%10 == 0:
-                        element['video_name'] = file
-                        dict_arr.append(element)
+            # get every 10th frame
+            for index, element in enumerate(annos):
+                if index%10 == 0:
+                    element['video_name'] = file
+                    dict_arr.append(element)
 
     return dict_arr
 
@@ -40,7 +32,7 @@ def process_csv(csv_path):
     csv = pd.read_csv(csv_path)
     csv_dict = csv.to_dict('records')
     for index,element in enumerate(csv_dict):
-        filename = element['file_name']
+        filename = element['filename']
         label = element['label']
         filename_arr.append(filename)
         label_arr.append(label)
@@ -64,7 +56,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--json-path",
-        default="./",
+        default="./json",
         nargs=1,
         metavar="JSON_PATH",
         help="Path to the json file",
@@ -72,7 +64,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--csv-path",
-        default="./",
+        default="./csv/annotations.csv",
         nargs=1,
         metavar="CSV_PATH",
         help="Path to the json file",
