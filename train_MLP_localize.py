@@ -37,7 +37,7 @@ class HandoverDataset(Dataset):
             temp = np.asarray(temp)
             temp = temp.flatten()
 
-            key_det = self.annos[idx]["keypoint_detection"]["pred_keypoints"][0]
+            key_det = self.annos[idx]["keypoint_detection"]["pred_keypoints"]
             key_det = np.asarray(key_det)
             key_det = key_det[0:11, 0:2]
             key_det = np.subtract(key_det, temp[0:2])
@@ -47,14 +47,16 @@ class HandoverDataset(Dataset):
             obj_det = [-1]
             obj_det = np.asarray(obj_det)
 
-            key_det = self.annos[idx]["keypoint_detection"]["pred_keypoints"][0]
+            key_det = self.annos[idx]["keypoint_detection"]["pred_keypoints"]
             key_det = np.asarray(key_det)
             key_det = key_det[0:11, 0:2]
             key_det = key_det.flatten()
 
         if self.annos[idx]["head_pose_estimation"]["predictions"]:
-            hp_est = self.annos[idx]["head_pose_estimation"]["predictions"][0]
+            hp_est = self.annos[idx]["head_pose_estimation"]["predictions"]
             hp_est = np.asarray(hp_est)
+            hp_est = hp_est.flatten()
+            hp_est = hp_est[0:3]
         else:
             hp_est = np.asarray([-100, -100, -100])
 
