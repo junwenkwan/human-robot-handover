@@ -1,6 +1,6 @@
 # Human-to-Robot Handover
 <div align="center">
-<img src="./teaser/demo.gif" width="700"/><br>
+<img src="./teaser/demo.gif"/><br>
 </div>
 
 ## Requirements
