@@ -15,9 +15,8 @@
 Download the pretrained models for [object detection](https://drive.google.com/file/d/1gx6beqSOwh0mTkATEDe3tdKdya-vPZSZ/view?usp=sharing), [head pose estimation](https://drive.google.com/file/d/1kY2nfpnFsows14TLKTOd-8PYftOAeomh/view?usp=sharing) and [MLP](https://drive.google.com/file/d/157lPmRjEUj6P1ovzsUklnXMe9PCT5mp1/view?usp=sharing). Place them in ```./pretrained-weights```.
 
 ## System Diagram
-<div align="center">
-<img src="./teaser/system_diagram.png" width=600/><br>
-</div>
+<img src="./teaser/system_diagram.png" width=500/><br>
+
 
 ## Training process
 ### Step 1: Run system for generating relevant training data
