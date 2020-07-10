@@ -95,7 +95,7 @@ def do_train(model, device, trainloader, criterion, optimizer, epochs, weights_p
             # print statistics
             running_loss += loss.item()
             if i % 10 == 9:    # print every 10 mini-batches
-                print('[%d, %3d] loss: %.5f' %
+                print('[%d, %3d] loss: %.3f' %
                       (epoch + 1, i + 1, running_loss / 10))
                 running_loss = 0.0
 
@@ -122,7 +122,7 @@ def do_test(model, device, testloader, weights_pth):
             total += cls.size(0)
             correct += (predicted.flatten() == cls).sum().item()
 
-    print('Accuracy of the network on the %d test images: %d %%' % (len(testloader),
+    print('Accuracy of the network on the %d test images: %5f %%' % (len(testloader),
         100 * correct / total))
 
 def main(args):
