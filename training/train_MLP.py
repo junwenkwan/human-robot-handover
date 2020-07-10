@@ -33,23 +33,25 @@ class HandoverDataset(Dataset):
             idx = idx.tolist()
 
         if self.annos[idx]["object_detection"]["pred_boxes"]:
-            obj_det = self.annos[idx]["object_detection"]["pred_boxes"][0]
+            obj_det = self.annos[idx]["object_detection"]["pred_boxes"]
             obj_det = np.asarray(obj_det)
             obj_det = obj_det.flatten()
         else:
-            obj_det = [-1,-1,-1,-1]
+            obj_det = [-999,-999,-999,-999]
             obj_det = np.asarray(obj_det)
 
-        key_det = self.annos[idx]["keypoint_detection"]["pred_keypoints"][0]
+        key_det = self.annos[idx]["keypoint_detection"]["pred_keypoints"]
         key_det = np.asarray(key_det)
         key_det = key_det[0:11, 0:2]
         key_det = key_det.flatten()
 
         if self.annos[idx]["head_pose_estimation"]["predictions"]:
-            hp_est = self.annos[idx]["head_pose_estimation"]["predictions"][0]
+            hp_est = self.annos[idx]["head_pose_estimation"]["predictions"]
             hp_est = np.asarray(hp_est)
+            hp_est = hp_est.flatten()
+            hp_est = hp_est[0:3]
         else:
-            hp_est = np.asarray([-100, -100, -100])
+            hp_est = np.asarray([-999, -999, -999])
 
         label = self.annos[idx]["label"]
 
@@ -63,11 +65,12 @@ class MLP(nn.Module):
         super(MLP, self).__init__()
         self.input_size = input_size
         self.output_size = output_size
-        self.fc1 = nn.Linear(self.input_size, 1024)
-        self.fc2 = nn.Linear(1024, 2048)
-        self.fc3 = nn.Linear(2048, 1024)
-        self.fc4 = nn.Linear(1024, 512)
-        self.fc5 = nn.Linear(512, self.output_size)
+        self.fc1 = nn.Linear(self.input_size, 512)
+        self.fc2 = nn.Linear(512, 1024)
+        self.fc3 = nn.Linear(1024,2048)
+        self.fc4 = nn.Linear(2048, 1024)
+        self.fc5 = nn.Linear(1024, 512)
+        self.fc6 = nn.Linear(512, self.output_size)
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
@@ -75,9 +78,11 @@ class MLP(nn.Module):
         x = F.relu(self.fc2(x))
         x = F.relu(self.fc3(x))
         x = F.relu(self.fc4(x))
-        x = self.fc5(x)
+        x = F.relu(self.fc5(x))
+        x = self.fc6(x)
         output = self.sigmoid(x)
         return output
+
 
 """
 TRAINING LOOP
@@ -137,7 +142,7 @@ def do_test(model, device, testloader, weights_pth):
 
             # print(outputs, predicted, cls)
 
-    print('Accuracy of the network on the %d test images: %d %%' % (len(testloader),
+    print('Accuracy of the network on the %d test images: %5f %%' % (len(testloader),
         100 * correct / total))
 
 def main(args):
@@ -147,7 +152,7 @@ def main(args):
     handover_dataset = HandoverDataset(args.json_path[0])
     handover_train, handover_test = random_split(handover_dataset, (round(0.8*len(handover_dataset)), round(0.2*len(handover_dataset))))
 
-    trainloader = DataLoader(handover_train, batch_size=16, shuffle=True, num_workers=2)
+    trainloader = DataLoader(handover_train, batch_size=64, shuffle=True, num_workers=2)
     testloader = DataLoader(handover_test, batch_size=1, shuffle=False, num_workers=2)
 
     weights_pth = args.weights_path[0]
@@ -157,8 +162,8 @@ def main(args):
     model.to(device)
 
     criterion = nn.BCELoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.00001)
-    epochs = 200
+    optimizer = optim.Adam(model.parameters(), lr=0.000001)
+    epochs = 500
 
     if args.eval_only:
         do_test(model, device, testloader, weights_pth)
