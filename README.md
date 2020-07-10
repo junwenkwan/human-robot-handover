@@ -33,7 +33,7 @@ python3 utils/json_utils.py --json-path [JSON_FOLDER] --csv-path [classes.csv] \
 
 ### Step 3: Train MLP network
 ```bash
-python3 train_MLP_localize.py --json-path [JSON_FILE] --weights-path [PATH_TO_WEIGHTS]
+python3 training/train_MLP_localize.py --json-path [JSON_FILE] --weights-path [PATH_TO_WEIGHTS]
 ```
 
 ## Deployment
