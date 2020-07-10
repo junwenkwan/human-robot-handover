@@ -12,6 +12,8 @@ import random
 import torch.nn as nn
 import torch.optim as optim
 import argparse
+import sys
+sys.path.append(sys.path[0] + "/..")
 os.environ['CUDA_LAUNCH_BLOCKING']='1'
 """
 DATALOADER

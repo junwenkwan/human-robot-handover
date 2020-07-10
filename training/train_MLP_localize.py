@@ -12,6 +12,8 @@ from torch.utils.data import Dataset, DataLoader, random_split
 import torch.optim as optim
 from torch.autograd import Variable
 import json
+import sys
+sys.path.append(sys.path[0] + "/..")
 from model.mlp import MLP
 os.environ['CUDA_LAUNCH_BLOCKING']='1'
 

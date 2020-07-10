@@ -12,6 +12,8 @@ from torch.utils.data import Dataset, DataLoader, random_split
 import torch.optim as optim
 from torch.autograd import Variable
 import json
+import sys
+sys.path.append(sys.path[0] + "/..")
 os.environ['CUDA_LAUNCH_BLOCKING']='1'
 
 class HandoverDataset(Dataset):
