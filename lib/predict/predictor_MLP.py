@@ -92,7 +92,7 @@ class VisualizationDemoMLP(object):
                 key_det = key_det.flatten()
 
             else:
-                obj_det = [-1]
+                obj_det = [-999]
                 obj_det = np.asarray(obj_det)
 
                 key_det = annos["keypoint_detection"]["pred_keypoints"][0]
@@ -104,7 +104,7 @@ class VisualizationDemoMLP(object):
                 hp_est = annos["head_pose_estimation"]["predictions"][0]
                 hp_est = np.asarray(hp_est)
             else:
-                hp_est = np.asarray([-100, -100, -100])
+                hp_est = np.asarray([-999, -999, -999])
 
             anno_list = np.concatenate((obj_det, key_det, hp_est))
             return anno_list
@@ -151,8 +151,11 @@ class VisualizationDemoMLP(object):
             outputs_MLP = self.mlp_model(inputs_MLP)
             predicted_MLP = (outputs_MLP >= 0.5)
 
-            cv2.putText(vis_frame,str(predicted_MLP.item()), (10,700), \
-                cv2.FONT_HERSHEY_SIMPLEX, 3, (0,0,0), 10)
+            if predicted_MLP.item():
+                cv2.putText(vis_frame,str(predicted_MLP.item()), (10,700), cv2.FONT_HERSHEY_SIMPLEX, 3, (0,255,0), 10)
+            else:
+                cv2.putText(vis_frame,str(predicted_MLP.item()), (10,700), cv2.FONT_HERSHEY_SIMPLEX, 3, (0,0,255), 10)
+
 
             return vis_frame, data_json
 
