@@ -92,12 +92,13 @@ class VisualizationDemoMLP(object):
                 key_det = key_det.flatten()
 
             else:
-                obj_det = [-999]
+                obj_det = [0]
                 obj_det = np.asarray(obj_det)
 
                 key_det = annos["keypoint_detection"]["pred_keypoints"][0]
                 key_det = np.asarray(key_det)
-                key_det = key_det[0:11, 0:2]
+                #key_det = key_det[0:11, 0:2]
+                key_det = np.zeros((11, 2))
                 key_det = key_det.flatten()
 
             if annos["head_pose_estimation"]["predictions"]:
@@ -152,9 +153,12 @@ class VisualizationDemoMLP(object):
             predicted_MLP = (outputs_MLP >= 0.5)
 
             if predicted_MLP.item():
-                cv2.putText(vis_frame,str(predicted_MLP.item()), (10,700), cv2.FONT_HERSHEY_SIMPLEX, 3, (0,255,0), 10)
+                #cv2.putText(vis_frame,str(predicted_MLP.item()), (10,700), cv2.FONT_HERSHEY_SIMPLEX, 3, (0,255,0), 10)
+                cv2.circle(vis_frame, (125,125), 75, (0,255,0), 50)
             else:
-                cv2.putText(vis_frame,str(predicted_MLP.item()), (10,700), cv2.FONT_HERSHEY_SIMPLEX, 3, (0,0,255), 10)
+                # cv2.putText(vis_frame,str(predicted_MLP.item()), (10,700), cv2.FONT_HERSHEY_SIMPLEX, 3, (0,0,255), 10)
+                cv2.line(vis_frame, (50,50), (200,200), (0,0,255), 50)
+                cv2.line(vis_frame, (50,200), (200, 50), (0,0,255), 50)
 
 
             return vis_frame, data_json
