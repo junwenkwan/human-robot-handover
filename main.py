@@ -15,6 +15,7 @@ from detectron2.utils.logger import setup_logger
 
 from lib.predict.predictor import VisualizationDemo
 from lib.predict.predictor_MLP import VisualizationDemoMLP
+from lib.predict.predictor_MLP_nonlocalized import VisualizationDemoMLPNonLocalized
 from utils.add_custom_config import *
 import json
 import copy
@@ -100,6 +101,7 @@ def get_parser():
     )
 
     parser.add_argument("--train", action="store_true", help="Run training.")
+    parser.add_argument("--non-localized", action="store_true", help="Run alternate modality.")
 
     return parser
 
@@ -120,6 +122,8 @@ if __name__ == "__main__":
 
     if args.train:
         demo = VisualizationDemo(cfg_object, cfg_keypoint)
+    elif args.non_localized:  
+        demo = VisualizationDemoMLPNonLocalized(cfg_object, cfg_keypoint)
     else:
         demo = VisualizationDemoMLP(cfg_object, cfg_keypoint)
     frame = 0

@@ -12,4 +12,5 @@ def add_custom_config(cfg):
     _C.HEAD_POSE.GPU_ID = 0
 
     _C.MLP = CN()
-    _C.MLP.PRETRAINED = "./pretrained-weights/MLP_final.pth"
+    _C.MLP.PRETRAINED = "./pretrained-weights/MLP_localized.pth"
+    _C.MLP.PRETRAINED_NONLOCALIZED = "./pretrained-weights/MLP_nonlocalized.pth"
