@@ -77,6 +77,12 @@ class VisualizationDemoMLP(object):
         video_visualizer_keypoint = VideoVisualizer(self.metadata_keypoint, self.instance_mode)
 
         def get_parameters(annos):
+            if annos["head_pose_estimation"]["predictions"]:
+                hp_est = annos["head_pose_estimation"]["predictions"][0]
+                hp_est = np.asarray(hp_est)
+            else:
+                hp_est = np.asarray([-999, -999, -999])
+                
             if annos["object_detection"]["pred_boxes"]:
                 temp = annos["object_detection"]["pred_boxes"][0]
                 obj_det = [1]
@@ -90,21 +96,11 @@ class VisualizationDemoMLP(object):
                 # localization
                 key_det = np.subtract(key_det, temp[0:2])
                 key_det = key_det.flatten()
-
             else:
                 obj_det = [0]
                 obj_det = np.asarray(obj_det)
-
-                key_det = annos["keypoint_detection"]["pred_keypoints"][0]
-                key_det = np.asarray(key_det)
-                #key_det = key_det[0:11, 0:2]
                 key_det = np.zeros((11, 2))
                 key_det = key_det.flatten()
-
-            if annos["head_pose_estimation"]["predictions"]:
-                hp_est = annos["head_pose_estimation"]["predictions"][0]
-                hp_est = np.asarray(hp_est)
-            else:
                 hp_est = np.asarray([-999, -999, -999])
 
             anno_list = np.concatenate((obj_det, key_det, hp_est))
