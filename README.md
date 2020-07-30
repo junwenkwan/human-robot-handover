@@ -1,9 +1,9 @@
-# Object-Independent Recognition of Human-to-Robot Handovers
+# Gesture Recognition for Initiating Human-to-Robot Handovers
 <div align="center">
 <img src="./teaser/demo.gif"/><br>
 </div>
 
-[Link](https://youtu.be/k8uvbyvHBfY) to Youtube.
+[Link](https://arxiv.org/abs/2007.09945) to arXiv.
 
 ## Requirements
 * [detectron2](https://github.com/facebookresearch/detectron2) (Follow [INSTALL.md](https://github.com/facebookresearch/detectron2/blob/master/INSTALL.md) to install detectron2)
