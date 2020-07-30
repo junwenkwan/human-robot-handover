@@ -1,9 +1,14 @@
 # Gesture Recognition for Initiating Human-to-Robot Handovers
+* This is part of my summer research project at Monash University.
+* The entire project is executed on my Nvidia GeForce GTX1060 graphic card.
+* A custom dataset is created in Monash University to train the multi-layer perceptron.
+* A total of 25 videos are recorded in a lab setting, containing a total of 2506 images.
+* [Link](https://arxiv.org/abs/2007.09945) to arXiv.
+
 <div align="center">
 <img src="./teaser/demo.gif"/><br>
 </div>
 
-[Link](https://arxiv.org/abs/2007.09945) to arXiv.
 
 ## Requirements
 * [detectron2](https://github.com/facebookresearch/detectron2) (Follow [INSTALL.md](https://github.com/facebookresearch/detectron2/blob/master/INSTALL.md) to install detectron2)
