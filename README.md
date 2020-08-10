@@ -58,3 +58,8 @@ python3 main.py \
         --obj-weights ./pretrained-weights/Apple_Faster_RCNN_R_101_FPN_3x.pth \
         --video-input [VIDEO_INPUT] \
         --output [OUTPUT]
+```
+
+## Credits
+* [natanielruiz/deep-head-pose](https://github.com/natanielruiz/deep-head-pose)
+* [facebookresearch/detectron2](https://github.com/facebookresearch/detectron2)
