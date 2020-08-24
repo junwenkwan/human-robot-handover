@@ -1,5 +1,5 @@
 # Gesture Recognition for Initiating Human-to-Robot Handovers
-* This is part of my summer research project at Monash University.
+* This is part of my summer research project at Monash University, supervised by Dr Akansel Cosgun.
 * The entire project is executed on my Nvidia GeForce GTX1060 graphic card.
 * A custom dataset is created in Monash University to train the multi-layer perceptron.
 * A total of 25 videos are recorded in a lab setting, containing a total of 2506 images.
