@@ -3,7 +3,7 @@
 * The entire project is executed on my Nvidia GeForce GTX1060 graphic card.
 * A custom dataset is created in Monash University to train the multi-layer perceptron.
 * A total of 25 videos are recorded in a lab setting, containing a total of 2506 images.
-* Link to arXiv: [https://arxiv.org/abs/2007.09945](https://arxiv.org/abs/2007.09945) .
+* Link to arXiv: [https://arxiv.org/abs/2007.09945](https://arxiv.org/abs/2007.09945).
 
 <div align="center">
 <img src="./teaser/demo.gif"/><br>
