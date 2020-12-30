@@ -3,6 +3,7 @@
 * The entire project is executed on my Nvidia GeForce GTX1060 graphic card.
 * A custom dataset is created in Monash University to train the multi-layer perceptron.
 * A total of 25 videos are recorded in a lab setting, containing a total of 2506 images.
+* This paper is accepted by [AVHRC2020 workshop](https://www.essex.ac.uk/departments/computer-science-and-electronic-engineering/events/avhrc-2020).
 * Link to arXiv: [https://arxiv.org/abs/2007.09945](https://arxiv.org/abs/2007.09945).
 
 <div align="center">
@@ -58,6 +59,16 @@ python3 main.py \
         --obj-weights ./pretrained-weights/Apple_Faster_RCNN_R_101_FPN_3x.pth \
         --video-input [VIDEO_INPUT] \
         --output [OUTPUT]
+```
+
+## Citation
+```
+@article{kwan2020handover,
+  title={Gesture Recognition for Initiating Human-to-Robot Handovers},
+  author={Kwan, Jun and Tan, Chinkye and Cosgun, Akansel},
+  journal={arXiv preprint arXiv:2007.09945},
+  year={2020}
+}
 ```
 
 ## Credits
